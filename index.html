@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conexão Campo-Cidade: Sustentabilidade e Cultura</title>
+    <style>
+        /* Estilos Gerais do Corpo e Contêiner */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #c8e6c9, #a5d6a7); /* Gradiente suave de verde */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinha no topo para dar espaço ao margin-top */
+            min-height: 10vh; /* Altura mínima da tela */
+            color: #2e4d25; /* Cor de texto principal */
+        }
+        #container {
+            background: #fffefa; /* Fundo creme claro */
+            border-radius: 12px; /* Cantos arredondados */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25); /* Sombra elegante */
+            width: 800px; /* Largura fixa, ideal para o canvas P5.js */
+            max-width: 95vw; /* Garante responsividade em telas menores */
+            padding: 20px;
+            margin-top: 20px; /* Espaçamento do topo */
+            display: flex;
+            flex-direction: column;
+            min-height: 600px; /* Altura mínima para o conteúdo */
+            box-sizing: border-box; /* Padding incluído na largura/altura total */
+        }
+
+        /* Estilos dos Slides de Explicação */
+        .slide-content {
+            display: none; /* Escondido por padrão */
+            font-size: 1.15em;
+            line-height: 1.5;
+            padding: 10px;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out; /* Efeito de fade */
+            opacity: 0; /* Começa invisível para o fade-in */
+        }
+        .slide-content.active {
+            display: block; /* Mostra o slide ativo */
+            opacity: 1; /* Fade-in */
+        }
+
+        /* Controles de Navegação (Botões) */
+        #slideControls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        button {
+            background-color: #388e3c; /* Verde forte */
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Transição suave no hover */
+        }
+        button:hover:not(:disabled) {
+            background-color: #2e7030; /* Verde mais escuro no hover */
+        }
+        button:disabled {
+            background-color: #a5d6a7; /* Verde claro para desabilitado */
+            cursor: default;
+        }
+        .game-button {
+            margin-top: 15px;
+            width: 100%; /* Botões de jogo ocupam a largura total */
+            font-size: 1.2em;
+            display: block; /* Garante que ocupem a linha inteira */
+        }
+
+        /* Área do Jogo P5.js */
+        #p5GameArea {
+            display: none; /* Escondido por padrão */
+            margin-top: 15px;
+            text-align: center;
+            flex-direction: column; /* Para alinhar canvas e mensagem */
+            align-items: center;
+            justify-content: center; /* Centraliza o conteúdo */
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 12px;
+            background: #eee; /* Fundo padrão do canvas P5.js */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra leve no canvas */
+        }
+        #p5GameMessage {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2e4d25;
+            min-height: 2em; /* Garante espaço para a mensagem */
+        }
+
+        /* Área do Segundo Jogo (Arrastar e Soltar) */
+        #secondGameArea {
+            display: none; /* Escondido por padrão */
+            flex-direction: column; /* Alinha elementos em coluna */
+            align-items: center; /* Centraliza horizontalmente */
+            padding: 20px;
+        }
+        #secondGameArea > div {
+            width: 100%;
+            max-width: 760px; /* Ajusta à largura do contêiner */
+        }
+        #field, #truck {
+            background: rgba(255, 255, 255, 0.8); /* Fundo branco semitransparente */
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #items {
+            display: flex;
+            flex-wrap: wrap; /* Permite que os itens quebrem linha */
+            justify-content: center; /* Centraliza os itens */
+            min-height: 80px; /* Altura mínima para o campo de itens */
+        }
+        .item {
+            padding: 10px 15px;
+            margin: 8px; /* Espaçamento entre os itens */
+            border-radius: 8px;
+            background: #81c784; /* Verde médio */
+            color: white;
+            font-weight: bold;
+            cursor: grab; /* Cursor de "pegar" */
+            transition: transform 0.2s ease, background-color 0.2s ease; /* Transições suaves */
+        }
+        .item:hover {
+            transform: translateY(-3px); /* Efeito de elevação ao passar o mouse */
+            background-color: #6aa84f; /* Um pouco mais escuro no hover */
+        }
+        #dropzone {
+            min-height: 150px; /* Altura mínima para a zona de soltura */
+            border: 3px dashed #4caf50; /* Borda tracejada verde */
+            border-radius: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: background-color 0.3s ease, border-color 0.3s ease; /* Transições suaves */
+            padding: 10px;
+            color: #555;
+        }
+        #dropzone.hover {
+            background-color: #e6ffe6; /* Fundo claro no hover da dropzone */
+            border-color: #2e7030;
+        }
+        #dropzone.correct {
+            background-color: #d4edda; /* Verde claro para certo */
+            border-color: #28a745; /* Borda verde escura para certo */
+        }
+        #dropzone.incorrect {
+            background-color: #f8d7da; /* Vermelho claro para errado */
+            border-color: #dc3545; /* Borda vermelha escura para errado */
+        }
+        #score, #timer {
+            font-size: 1.4rem; /* Tamanho maior para placar e tempo */
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #388e3c;
+        }
+        #nextRoundBtn {
+            display: none;
+            padding: 12px 25px; /* Ajusta o padding */
+            margin-top: 20px; /* Mais espaço do elemento acima */
+            font-size: 1.1em;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+</head>
+<body>
+
+    <div id="container">
+        <div id="slides">
+            <div class="slide-content active">
+                <h2>Bem-vindo à Conexão Campo-Cidade! 🌍</h2>
+                <p>Descubra a importância da relação entre o campo e as áreas urbanas. O campo nos alimenta e mantém viva nossa cultura, enquanto a cidade oferece oportunidades e tecnologia.</p>
+                <p>Vamos entender essa parceria e como torná-la cada vez mais **sustentável**!</p>
+            </div>
+            <div class="slide-content">
+                <h2>Feiras e Mercados Locais: O Elos Essencial 🥕</h2>
+                <p>As feiras e mercados em sua cidade são muito mais que pontos de venda. Eles **valorizam o produtor rural**, reduzem a distância do alimento até você e garantem produtos frescos e saudáveis.</p>
+                <p>Esses espaços são a base para uma **economia local forte e sustentável**.</p>
+            </div>
+            <div class="slide-content">
+                <h2>Desafios da Produção Rural 🚜</h2>
+                <p>Nem tudo é simples no campo. Para que os alimentos cheguem à sua mesa, há muitos desafios! Escoar a produção exige **boas estradas, armazenamento adequado e uma logística eficiente**.</p>
+                <p>Superar esses obstáculos é crucial para valorizar o trabalho do campo e beneficiar toda a sociedade.</p>
+            </div>
+            <div class="slide-content">
+                <h2>Construindo uma Conexão Sustentável 🤝</h2>
+                <p>Para um futuro melhor, precisamos de um elo entre campo e cidade que seja **justo e duradouro**.</p>
+                <p>Isso se traduz em **produção consciente**, **transporte verde** (com menor impacto ambiental) e o **consumo local** de produtos. Pequenas ações fazem uma grande diferença!</p>
+            </div>
+            <div class="slide-content">
+                <h2>A Cultura do Campo na Cidade ✨</h2>
+                <p>As ricas tradições rurais, como as vibrantes **Festas Juninas**, não ficam apenas no campo. Elas chegam às cidades, mantendo viva a **nossa identidade e os laços com a agricultura familiar**.</p>
+                <p>É fundamental **preservar as raízes culturais** do campo e garantir que essas festas celebrem a tradição, e não apenas o lucro comercial.</p>
+            </div>
+            <div class="slide-content">
+                <h2>Como Jogar: "Do Campo à Cidade" (P5.js) 🎮</h2>
+                <p>Este é o primeiro desafio! Você fará uma jornada visual do campo à cidade, explorando cenários e testando seus conhecimentos.</p>
+                <p>Use os botões de navegação no canto inferior da tela para avançar ou retornar entre as cenas e responder aos quizzes. Fique atento às mensagens!</p>
+            </div>
+
+            <div id="slideControls">
+                <button id="prevSlide" disabled>← Anterior</button>
+                <button id="nextSlide">Próximo →</button>
+            </div>
+            <button id="startGameBtn" class="game-button">Começar o Jogo</button>
+        </div>
+
+        <div id="p5GameArea">
+            <div id="p5GameMessage"></div>
+            <canvas id="gameCanvas"></canvas>
+            <button id="restartP5Game" class="game-button" style="display: none;">Reiniciar Jogo</button>
+            <button id="startSecondGameBtn" class="game-button" style="display: none;">Avançar para o Desafio Sustentável</button>
+        </div>
+
+        <div id="secondGameArea">
+            <div id="score">Pontos: 0</div>
+            <div id="timer">Tempo: 60s</div>
+            <div id="field">
+                <h2>🌾 Itens do Campo & Outros...</h2>
+                <div id="items">
+                </div>
+            </div>
+            <div id="truck">
+                <h2>🚚 Caminhão da Sustentabilidade</h2>
+                <div id="dropzone">Arraste e solte **SOMENTE** os itens sustentáveis aqui!</div>
+                <button id="nextRoundBtn" class="game-button">Próxima Rodada</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Gerenciamento de Slides ---
+        const slides = document.querySelectorAll('.slide-content');
+        const prevBtn = document.getElementById('prevSlide');
+        const nextBtn = document.getElementById('nextSlide');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const startSecondGameBtn = document.getElementById('startSecondGameBtn'); // Botão para o segundo jogo
+
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            // Esconde todos os slides e remove a classe 'active' para resetar a transição
+            slides.forEach((slide) => {
+                slide.classList.remove('active');
+                slide.style.display = 'none'; // Esconde para garantir que não apareça durante o fade
+            });
+
+            // Exibe o slide atual com um pequeno atraso para o efeito de fade-in
+            setTimeout(() => {
+                slides[index].style.display = 'block'; // Mostra o slide
+                // Força o reflow para garantir que a transição de opacidade ocorra
+                void slides[index].offsetWidth;
+                slides[index].classList.add('active'); // Adiciona a classe 'active' para iniciar o fade-in
+            }, 50); // Pequeno atraso para o CSS capturar o 'display: block' antes da 'active'
+
+            prevBtn.disabled = index === 0;
+            // Oculta o botão 'Próximo' na última slide de instrução, mostrando o botão 'Começar o Jogo'
+            nextBtn.style.display = (index === slides.length - 1) ? 'none' : 'inline-block';
+            startGameBtn.style.display = (index === slides.length - 1) ? 'block' : 'none';
+        }
+
+        prevBtn.onclick = () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        };
+
+        nextBtn.onclick = () => {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        };
+
+        // Exibe o primeiro slide ao carregar
+        showSlide(currentSlide);
+
+        // --- Jogo P5.js (Primeiro Jogo) ---
+        let estado = 0; // Estados do P5.js: 0: início, 1: campo, 2: cidade, 3: quiz1, 4: quiz2, 5: final
+        let xFarmer = -50; // Posição inicial do fazendeiro
+        let respostaCerta = 1; // Resposta correta para o quiz 1
+        let respostaSelecionada = -1; // Resposta selecionada pelo usuário no quiz 1
+        let respostaCerta2 = 2; // Resposta correta para o quiz 2
+        let respostaSelecionada2 = -1; // Resposta selecionada pelo usuário no quiz 2
+        let bandeiras = []; // Para as bandeiras decorativas
+        let fogos = []; // Para os fogos de artifício
+        let p5Canvas; // Referência ao canvas do P5.js
+
+        // Função de configuração do P5.js (chamada uma vez no início)
+        function setup() {
+            p5Canvas = createCanvas(800, 400); // Cria o canvas
+            p5Canvas.parent('p5GameArea'); // Anexa o canvas à div 'p5GameArea'
+            textAlign(CENTER, CENTER);
+            textFont("Georgia"); // Define a fonte
+
+            // Inicializa as bandeiras para a tela final
+            for (let i = 0; i < width; i += 40) {
+                bandeiras.push({
+                    x: i,
+                    y: 40,
+                    cor: color(random(255), random(255), random(255)),
+                });
+            }
+            noLoop(); // Pausa o loop de desenho do P5.js até o jogo iniciar
+        }
+
+        // Função de desenho do P5.js (chamada repetidamente)
+        function draw() {
+            background(220); // Fundo padrão
+
+            // Renderiza a tela baseada no estado atual
+            if (estado === 0) telaInicioP5();
+            else if (estado === 1) telaCampo();
+            else if (estado === 2) telaCidade();
+            else if (estado === 3) telaQuiz();
+            else if (estado === 4) telaQuiz2();
+            else if (estado === 5) telaFinalP5();
+
+            desenhaBotoesP5(); // Desenha os botões de navegação do P5.js
+        }
+
+        // Funções das Telas do Jogo P5.js
+        function telaInicioP5() {
+            background(255, 204, 0); // Amarelo
+            fill(0);
+            textSize(36);
+            text("Do Campo à Cidade", width / 2, height / 2 - 60);
+            textSize(20);
+            text("Celebrando culturas rurais e colhendo oportunidades", width / 2, height / 2);
+            document.getElementById('p5GameMessage').textContent = 'Explore a conexão entre o campo e a cidade. Avance para começar.';
+            startSecondGameBtn.style.display = 'none'; // Esconde botão para o próximo jogo
+            document.getElementById('restartP5Game').style.display = 'none'; // Esconde o botão de reiniciar
+        }
+
+        function telaCampo() {
+            background(135, 206, 235); // Azul céu
+            drawSol();
+            drawField();
+            drawFarmer(xFarmer);
+            drawTrees();
+            drawBandeiras();
+
+            fill(0);
+            textSize(20);
+            text("O campo é vida, cultura e alimento para todos nós.", width / 2, 40);
+
+            xFarmer += 1.2; // Move o fazendeiro
+            if (xFarmer > width + 50) xFarmer = -50; // Reinicia a posição
+            document.getElementById('p5GameMessage').textContent = 'Observe a riqueza do ambiente rural e a importância da agricultura.';
+        }
+
+        function telaCidade() {
+            background(200); // Cinza claro
+            drawCity();
+            drawBandeiras(true); // Bandeiras na parte superior
+
+            fill(0);
+            textSize(20);
+            text("Na cidade, a cultura rural se mantém viva!", width / 2, 70);
+            text("Feiras, festas e tradições conectam gerações.", width / 2, 90);
+
+            fill(255, 255, 240); // Fundo para o texto de aviso
+            rect(150, 100, 500, 200, 10); // Caixa de texto arredondada
+            fill(0);
+            textSize(16);
+            textAlign(CENTER, CENTER);
+            text(
+                "Cuidado: muitas festas juninas hoje buscam apenas lucro e esquecem as raízes culturais do campo. " +
+                "Precisamos valorizar as tradições rurais, que são base da nossa identidade e da agricultura familiar.",
+                400, 105, 480, 180 // Posição e tamanho do texto
+            );
+            document.getElementById('p5GameMessage').textContent = 'Reflita sobre a preservação das tradições rurais nas cidades.';
+        }
+
+        function telaQuiz() {
+            background(245); // Cinza muito claro
+            fill(0);
+            textSize(30);
+            textAlign(CENTER);
+            text("QUIZ 1 - Teste seu conhecimento", width / 2, 50);
+
+            textSize(18);
+            let pergunta = "Por que é importante valorizar a cultura do campo?";
+            text(pergunta, width / 2, 100);
+
+            let opcoes = [
+                "A) Porque é onde nascem os modismos da cidade.",
+                "B) Porque ela é base da alimentação e das tradições.",
+                "C) Porque é onde se concentram as grandes empresas.",
+            ];
+
+            for (let i = 0; i < opcoes.length; i++) {
+                let x = width / 2 - 200;
+                let y = 160 + i * 60; // Espaçamento de 60px entre as opções
+                fill(respostaSelecionada === i ? "#ddd" : "#fff"); // Muda cor se selecionado
+                stroke(0);
+                rect(x, y, 400, 40, 10); // Retângulo da opção
+                fill(0);
+                noStroke();
+                text(opcoes[i], width / 2, y + 20); // Texto da opção
+            }
+
+            // Feedback do quiz
+            if (respostaSelecionada !== -1) {
+                textSize(20);
+                fill(respostaSelecionada === respostaCerta ? "green" : "red");
+                text(
+                    respostaSelecionada === respostaCerta
+                        ? "Correto! A cultura rural é essencial."
+                        : "Incorreto. Reflita sobre a importância do campo.",
+                    width / 2,
+                    350
+                );
+                document.getElementById('p5GameMessage').textContent = ''; // Limpa mensagem de instrução
+            } else {
+                document.getElementById('p5GameMessage').textContent = 'Clique na opção que você considera correta.';
+            }
+        }
+
+        function telaQuiz2() {
+            background(245);
+            fill(0);
+            textSize(24);
+            text("QUIZ 2 - Desafio avançado", width / 2, 50);
+
+            textSize(18);
+            textAlign(LEFT); // Alinha o texto da pergunta à esquerda
+            let pergunta = "O que devemos considerar nas festas juninas modernas?";
+            text(pergunta, width / 2 - 200, 100, 400, 60); // Posição e tamanho da pergunta
+
+            let opcoes = [
+                "A) Somente vender produtos e ingressos.",
+                "B) Aproveitar a festa sem pensar em nada.",
+                "C) Preservar as raízes rurais e evitar só o lucro.",
+            ];
+
+            for (let i = 0; i < opcoes.length; i++) {
+                let x = width / 2 - 200;
+                let y = 160 + i * 50; // Espaçamento de 50px
+                fill(respostaSelecionada2 === i ? "#ccc" : "#fff");
+                stroke(0);
+                rect(x, y, 400, 40, 10);
+                fill(0);
+                noStroke();
+                text(opcoes[i], width / 2 - 180, y + 20); // Ajuste para alinhar o texto dentro do retângulo
+            }
+
+            // Feedback do quiz
+            if (respostaSelecionada2 !== -1) {
+                textSize(18);
+                fill(respostaSelecionada2 === respostaCerta2 ? "green" : "red");
+                textAlign(CENTER);
+                text(
+                    respostaSelecionada2 === respostaCerta2
+                        ? "Correto! As raízes rurais devem ser respeitadas."
+                        : "Incorreto. A festa deve valorizar a cultura rural!",
+                    width / 2,
+                    340
+                );
+                document.getElementById('p5GameMessage').textContent = '';
+            } else {
+                document.getElementById('p5GameMessage').textContent = 'Escolha a melhor opção para preservar a cultura.';
+            }
+        }
+
+        function telaFinalP5() {
+            background(30, 30, 60); // Fundo escuro para a tela final
+
+            // Desenha bandeiras estáticas
+            for (let i = 0; i < bandeiras.length; i++) {
+                fill(bandeiras[i].cor);
+                triangle(
+                    bandeiras[i].x,
+                    bandeiras[i].y,
+                    bandeiras[i].x + 20,
+                    bandeiras[i].y,
+                    bandeiras[i].x + 10,
+                    bandeiras[i].y + 20
+                );
+            }
+
+            fill(255);
+            textSize(20);
+            textAlign(CENTER);
+            text(
+                "As festas juninas devem valorizar as raízes rurais, não apenas o lucro!",
+                width / 2,
+                height - 40
+            );
+
+            // Efeito de fogos de artifício
+            if (random(1) < 0.05) { // Chance de 5% de criar um novo fogo
+                fogos.push(new Fogo(random(width), height));
+            }
+            for (let i = fogos.length - 1; i >= 0; i--) {
+                fogos[i].update();
+                fogos[i].show();
+                if (fogos[i].finished()) {
+                    fogos.splice(i, 1); // Remove fogos que terminaram
+                }
+            }
+            document.getElementById('p5GameMessage').textContent = 'Parabéns por chegar ao final! Próximo, um desafio sobre sustentabilidade.';
+            startSecondGameBtn.style.display = 'block'; // Mostra o botão para o segundo jogo
+            document.getElementById('restartP5Game').style.display = 'block'; // Mostra o botão de reiniciar
+        }
+
+        // Lógica de clique do mouse para o P5.js
+        function mousePressed() {
+            // Verifica se o clique está dentro do canvas P5.js
+            if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+                // Lógica para os quizzes
+                if (estado === 3 || estado === 4) {
+                    let quizOptionsYStart = 160;
+                    let quizOptionHeight = 40;
+                    let quizOptionWidth = 400;
+                    let quizOptionX = width / 2 - quizOptionWidth / 2;
+                    let quizOptionSpacing = (estado === 3) ? 60 : 50; // Espaçamento diferente para cada quiz
+
+                    for (let i = 0; i < 3; i++) {
+                        let y = quizOptionsYStart + i * quizOptionSpacing;
+                        if (mouseX > quizOptionX && mouseX < quizOptionX + quizOptionWidth && mouseY > y && mouseY < y + quizOptionHeight) {
+                            if (estado === 3) {
+                                respostaSelecionada = i;
+                            } else { // estado === 4
+                                respostaSelecionada2 = i;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                // Lógica para os botões de navegação do P5.js
+                if (mouseY > height - 60 && mouseY < height - 30) {
+                    if (mouseX > 30 && mouseX < 70 && estado > 0) { // Botão Voltar
+                        estado--;
+                        resetQuizSelections(); // Reseta seleções de quiz ao navegar
+                    } else if (mouseX > width - 70 && mouseX < width - 30 && estado < 5) { // Botão Próximo
+                        estado++;
+                        resetQuizSelections(); // Reseta seleções de quiz ao navegar
+                    }
+                }
+            }
+        }
+
+        // Reseta as seleções dos quizzes
+        function resetQuizSelections() {
+            respostaSelecionada = -1;
+            respostaSelecionada2 = -1;
+        }
+
+        // Desenha os botões de navegação no P5.js
+        function desenhaBotoesP5() {
+            fill(255);
+            stroke(0);
+            rect(30, height - 60, 40, 30, 5); // Botão "Voltar"
+            rect(width - 70, height - 60, 40, 30, 5); // Botão "Próximo"
+
+            fill(0);
+            textSize(20);
+            text("⮜", 50, height - 45); // Seta para voltar
+            text("⮞", width - 50, height - 45); // Seta para próximo
+        }
+
+        // Funções de desenho de elementos específicos (sol, campo, fazendeiro, árvores, cidade, bandeiras)
+        function drawSol() {
+            fill(255, 204, 0); noStroke(); ellipse(700, 80, 80, 80);
+        }
+        function drawField() {
+            fill(34, 139, 34); rect(0, 300, width, 100);
+            for (let i = 20; i < 300; i += 40) { fill(0, 100, 0); rect(i, 270, 10, 30); fill(255, 215, 0); ellipse(i + 5, 270, 15, 15); }
+        }
+        function drawFarmer(x) {
+            fill(255, 165, 0); rect(x, 320, 20, 30); fill(255, 224, 189); ellipse(x + 10, 310, 20, 20);
+            fill(139, 69, 19); rect(x + 2, 300, 16, 5); rect(x, 298, 20, 3);
+        }
+        function drawTrees() {
+            for (let i = 400; i < width; i += 80) { fill(139, 69, 19); rect(i, 250, 10, 50); fill(34, 139, 34); ellipse(i + 5, 250, 40, 40); }
+        }
+        function drawCity() {
+            for (let i = 100; i < width - 100; i += 50) { fill(80, 80, 120); rect(i, 200, 40, random(100, 180)); }
+            fill(255, 200, 0); rect(300, 320, 100, 50); fill(0); textAlign(CENTER); text("FEIRA", 350, 345);
+        }
+        function drawBandeiras(cima = false) {
+            let y = cima ? 40 : 80;
+            for (let i = 0; i < width; i += 40) {
+                fill(random(255), random(255), random(255));
+                triangle(i, y, i + 20, y, i + 10, y + 20);
+            }
+        }
+
+        // Classes para o efeito de fogos de artifício
+        class Fogo {
+            constructor(x, y) { this.x = x; this.y = y; this.explodiu = false; this.particulas = []; this.cor = color(random(255), random(255), random(255)); this.velY = random(-8, -12); }
+            update() { if (!this.explodiu) { this.y += this.velY; this.velY += 0.2; if (this.velY > 0) this.explode(); } for (let p of this.particulas) p.update(); }
+            explode() { this.explodiu = true; for (let i = 0; i < 100; i++) { this.particulas.push(new Particula(this.x, this.y, this.cor)); } }
+            finished() { for (let p of this.particulas) if (!p.finished()) return false; return this.explodiu; }
+            show() { if (!this.explodiu) { fill(this.cor); ellipse(this.x, this.y, 8); } for (let p of this.particulas) p.show(); }
+        }
+        class Particula {
+            constructor(x, y, cor) { this.x = x; this.y = y; this.vel = p5.Vector.random2D().mult(random(2, 5)); this.alpha = 255; this.cor = cor; }
+            update() { this.x += this.vel.x; this.y += this.vel.y; this.vel.mult(0.95); this.alpha -= 4; }
+            finished() { return this.alpha < 0; }
+            show() { noStroke(); fill(red(this.cor), green(this.cor), blue(this.cor), this.alpha); ellipse(this.x, this.y, 4); }
+        }
+
+        // Evento para iniciar o jogo P5.js
+        startGameBtn.onclick = () => {
+            document.getElementById('slides').style.display = 'none'; // Esconde os slides de instrução
+            document.getElementById('p5GameArea').style.display = 'flex'; // Mostra a área do jogo P5.js
+            estado = 0; // Define o estado inicial do jogo P5.js
+            loop(); // Inicia o loop de desenho do P5.js
+        };
+
+        // Evento para reiniciar o jogo P5.js
+        document.getElementById('restartP5Game').onclick = () => {
+            estado = 0; // Volta para a tela inicial do P5.js
+            resetQuizSelections(); // Reseta as respostas dos quizzes
+            loop(); // Reinicia o loop de desenho
+            document.getElementById('restartP5Game').style.display = 'none'; // Esconde o botão de reiniciar
+            startSecondGameBtn.style.display = 'none'; // Esconde o botão do segundo jogo
+        };
+
+        // --- Segundo Jogo (Arrastar e Soltar) ---
+        const itemsData = [
+            {name: "🥕 Cenoura", sustainable: true},
+            {name: "🌽 Milho", sustainable: true},
+            {name: "🍎 Maçã", sustainable: true},
+            {name: "🥛 Leite", sustainable: true},
+            {name: "🧴 Agrotóxico", sustainable: false},
+            {name: "🧪 Produto Químico", sustainable: false},
+            {name: "🧃 Suco Natural", sustainable: true},
+            {name: "🔋 Bateria", sustainable: false},
+            {name: "🧴 Plástico", sustainable: false},
+            {name: "🥦 Brócolis", sustainable: true},
+            {name: "🌶️ Pimenta", sustainable: true},
+            {name: "🗑️ Lixo Eletrônico", sustainable: false}
+        ];
+        let score2 = 0; // Pontuação do segundo jogo
+        let tempo = 60; // Tempo do segundo jogo
+        let jogoAtivo = false; // Estado do segundo jogo
+        let intervalo; // Para o cronômetro
+
+        const itemsDiv = document.getElementById('items');
+        const dropzone = document.getElementById('dropzone');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const nextRoundBtn = document.getElementById('nextRoundBtn');
+
+        // Evento para iniciar o segundo jogo
+        startSecondGameBtn.onclick = () => {
+            document.getElementById('p5GameArea').style.display = 'none'; // Esconde a área do P5.js
+            document.getElementById('secondGameArea').style.display = 'flex'; // Mostra a área do segundo jogo
+            iniciarJogo2(); // Inicia o segundo jogo
+        };
+
+        function iniciarJogo2() {
+            score2 = 0;
+            tempo = 60;
+            jogoAtivo = true;
+            scoreDisplay.textContent = `Pontos: ${score2}`;
+            timerDisplay.textContent = `Tempo: ${tempo}s`;
+            nextRoundBtn.style.display = 'none'; // Esconde o botão de próxima rodada
+            dropzone.textContent = 'Arraste e solte **SOMENTE** os itens sustentáveis aqui!'; // Reseta o texto da dropzone
+            carregarItens(); // Carrega os itens para o jogo
+            iniciarCronometro(); // Inicia o cronômetro
+        }
+
+        function carregarItens() {
+            itemsDiv.innerHTML = ''; // Limpa os itens anteriores
+            let selectedItems = [];
+            let sustainableCount = 0;
+            let nonSustainableCount = 0;
+
+            const sustainableItems = itemsData.filter(item => item.sustainable);
+            const nonSustainableItems = itemsData.filter(item => !item.sustainable);
+
+            // Garante que haja pelo menos 2 itens sustentáveis e 2 não sustentáveis
+            while (sustainableCount < 2 && sustainableItems.length > 0) {
+                const item = sustainableItems.splice(Math.floor(Math.random() * sustainableItems.length), 1)[0];
+                selectedItems.push(item);
+                sustainableCount++;
+            }
+            while (nonSustainableCount < 2 && nonSustainableItems.length > 0) {
+                const item = nonSustainableItems.splice(Math.floor(Math.random() * nonSustainableItems.length), 1)[0];
+                selectedItems.push(item);
+                nonSustainableCount++;
+            }
+
+            // Preenche o restante até 6 itens (ou menos se não houver suficientes)
+            const remainingItems = [...sustainableItems, ...nonSustainableItems];
+            while (selectedItems.length < 6 && remainingItems.length > 0) {
+                selectedItems.push(remainingItems.splice(Math.floor(Math.random() * remainingItems.length), 1)[0]);
+            }
+
+            // Embaralha a lista final de itens
+            selectedItems.sort(() => 0.5 - Math.random());
+
+            selectedItems.forEach(item => {
+                const div = document.createElement('div');
+                div.classList.add('item');
+                div.textContent = item.name;
+                div.draggable = true; // Torna o item arrastável
+                div.dataset.sustainable = item.sustainable; // Armazena a informação de sustentabilidade
+                div.dataset.name = item.name; // Armazena o nome para identificação
+                div.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.sustainable); // Transfere o status de sustentabilidade
+                    e.dataTransfer.setData('text/name', e.target.dataset.name); // Transfere o nome do item
+                    e.dataTransfer.effectAllowed = 'move'; // Permite o efeito de mover
+                });
+                itemsDiv.appendChild(div);
+            });
+        }
+
+        // Eventos de arrastar e soltar
+        dropzone.addEventListener('dragover', e => {
+            e.preventDefault(); // Necessário para permitir o drop
+            dropzone.classList.add('hover'); // Adiciona feedback visual
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('hover'); // Remove feedback visual
+        });
+
+        dropzone.addEventListener('drop', e => {
+            dropzone.classList.remove('hover');
+            if (!jogoAtivo) return; // Ignora drops se o jogo não estiver ativo
+            e.preventDefault();
+
+            const isSustainable = e.dataTransfer.getData('text/plain') === 'true';
+            const itemName = e.dataTransfer.getData('text/name');
+
+            // Remove o item arrastado da div 'items'
+            const draggedItem = Array.from(itemsDiv.children).find(item => item.dataset.name === itemName);
+            if (draggedItem) {
+                draggedItem.remove();
+            }
+
+            // Adiciona o item à dropzone (visualmente)
+            // Crie um novo elemento para não "mover" o elemento original da lista e sim apenas a informação
+            const newItem = document.createElement('div');
+            newItem.classList.add('item');
+            newItem.textContent = itemName;
+            newItem.dataset.sustainable = isSustainable;
+            dropzone.appendChild(newItem);
+
+            if (isSustainable) {
+                dropzone.classList.add('correct');
+                score2 += 10;
+                dropzone.textContent = `✅ ${itemName} é Sustentável! Bom trabalho!`;
+            } else {
+                dropzone.classList.add('incorrect');
+                score2 -= 5;
+                dropzone.textContent = `❌ ${itemName} Não é Sustentável! Tente novamente.`;
+            }
+            scoreDisplay.textContent = `Pontos: ${score2}`;
+
+            // Limpa a dropzone e carrega novos itens após um breve feedback
+            setTimeout(() => {
+                dropzone.classList.remove('correct', 'incorrect');
+                // Remove o item da dropzone após o feedback, se for um item arrastado
+                if (newItem.parentNode === dropzone) {
+                    dropzone.removeChild(newItem);
+                }
+                dropzone.textContent = 'Arraste e solte **SOMENTE** os itens sustentáveis aqui!'; // Reseta o texto
+                carregarItens(); // Carrega novos itens para a próxima "rodada"
+            }, 600);
+        });
+
+        // Função para iniciar o cronômetro
+        function iniciarCronometro() {
+            clearInterval(intervalo); // Limpa qualquer cronômetro anterior
+            intervalo = setInterval(() => {
+                if (!jogoAtivo) return;
+                tempo--;
+                timerDisplay.textContent = `Tempo: ${tempo}s`;
+                if (tempo <= 0) {
+                    clearInterval(intervalo);
+                    jogoAtivo = false;
+                    dropzone.textContent = `⏰ Tempo esgotado! Sua pontuação final: ${score2}`;
+                    nextRoundBtn.style.display = 'block'; // Mostra o botão de próxima rodada/reiniciar
+                    itemsDiv.innerHTML = ''; // Limpa os itens ao fim do jogo
+                }
+            }, 1000); // Atualiza a cada 1 segundo
+        }
+
+        // Evento para a próxima rodada (ou reiniciar)
+        nextRoundBtn.onclick = () => {
+            iniciarJogo2(); // Reinicia o jogo por completo
+        };
+
+    </script>
+
+</body>
+</html>
